@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["pdf-parse", "@libsql/client", "@prisma/adapter-libsql"],
+  serverExternalPackages: ["pdf-parse", "pg", "@prisma/adapter-pg"],
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",

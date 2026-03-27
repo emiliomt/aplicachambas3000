@@ -1,32 +1,19 @@
-import { PrismaLibSql } from "@prisma/adapter-libsql";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
-import path from "path";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
 function createPrismaClient(): PrismaClient {
-  const databaseUrl = process.env.DATABASE_URL ?? "file:./dev.db";
-
-  let url: string;
-  if (databaseUrl.startsWith("libsql://") || databaseUrl.startsWith("https://")) {
-    // Turso hosted database
-    url = databaseUrl;
-  } else {
-    // Local SQLite file — make path absolute
-    const filePart = databaseUrl.startsWith("file:") ? databaseUrl.slice(5) : databaseUrl;
-    const absolutePath = path.isAbsolute(filePart)
-      ? filePart
-      : path.join(process.cwd(), filePart);
-    url = `file:${absolutePath}`;
-  }
-
-  const adapter = new PrismaLibSql({
-    url,
-    authToken: process.env.TURSO_AUTH_TOKEN,
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : false,
   });
-
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
 
