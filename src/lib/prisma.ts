@@ -6,15 +6,27 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-function createPrismaClient() {
-  const rawUrl = process.env.DATABASE_URL ?? "file:./dev.db";
-  // rawUrl is like "file:./dev.db" — make the path absolute so it works from any CWD
-  const filePart = rawUrl.startsWith("file:") ? rawUrl.slice(5) : rawUrl;
-  const absolutePath = path.isAbsolute(filePart)
-    ? filePart
-    : path.join(process.cwd(), filePart);
+function createPrismaClient(): PrismaClient {
+  const databaseUrl = process.env.DATABASE_URL ?? "file:./dev.db";
 
-  const adapter = new PrismaLibSql({ url: `file:${absolutePath}` });
+  let url: string;
+  if (databaseUrl.startsWith("libsql://") || databaseUrl.startsWith("https://")) {
+    // Turso hosted database
+    url = databaseUrl;
+  } else {
+    // Local SQLite file — make path absolute
+    const filePart = databaseUrl.startsWith("file:") ? databaseUrl.slice(5) : databaseUrl;
+    const absolutePath = path.isAbsolute(filePart)
+      ? filePart
+      : path.join(process.cwd(), filePart);
+    url = `file:${absolutePath}`;
+  }
+
+  const adapter = new PrismaLibSql({
+    url,
+    authToken: process.env.TURSO_AUTH_TOKEN,
+  });
+
   return new PrismaClient({ adapter });
 }
 
