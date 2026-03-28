@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
-RUN npm ci
+RUN npm ci --ignore-scripts
 
 # Build the application
 FROM base AS builder
